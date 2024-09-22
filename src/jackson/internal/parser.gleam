@@ -1,6 +1,7 @@
 import gleam/bool
 import gleam/float
 import gleam/int
+import gleam/list
 import gleam/regex
 import gleam/result
 import gleam/string
@@ -69,13 +70,23 @@ fn parse_object_entry(
       )
       let rest = string.trim_left(rest)
 
-      case rest {
+      use #(entries, rest) <- result.try(case rest {
         "," <> rest -> {
           use #(remaining, rest) <- result.try(parse_object_entry(rest, entries))
-          Ok(#([#(key, value), ..remaining], rest))
+          Ok(#(remaining, rest))
         }
-        "}" <> rest -> Ok(#([#(key, value), ..entries], rest))
+        "}" <> rest -> Ok(#(entries, rest))
         _ -> Error(unexpected_character(rest))
+      })
+
+      case
+        list.find(entries, fn(entry) {
+          let #(entry_key, _) = entry
+          entry_key == key
+        })
+      {
+        Error(_) -> Ok(#([#(key, value), ..entries], rest))
+        Ok(_) -> Ok(#(entries, rest))
       }
     }
     _ -> Error("Only strings are valid keys in json")
