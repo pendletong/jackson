@@ -42,6 +42,9 @@ fn parse_object(input: String) -> Result(#(Json, String), String) {
   let input = string.trim_left(input)
 
   case input {
+    "{}" <> rest -> {
+      Ok(#(Object([]), rest))
+    }
     "{" <> rest -> {
       use #(entries, rest) <- result.try(parse_object_entry(rest, []))
       Ok(#(Object(entries), rest))
