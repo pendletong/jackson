@@ -195,11 +195,27 @@ fn parse_exponent(first: String, second: String) -> Result(Json, Nil) {
   Ok(Float(first *. mult))
 }
 
-fn parse_string(input: String) -> Result(#(Json, String), String) {
+@target(erlang)
+fn string_regex() -> regex.Regex {
   let assert Ok(re) =
     regex.from_string(
-      "^\"([^\\\\\"\\\\u0000-\\\\u001F\\\\u007F-\\\\u009F\\\\u061C\\\\u200E\\\\u200F\\\\u202A-\\\\u202E\\\\u2066-\\\\u2069]|(\\\\(\"|\\\\|\\/|b|f|n|r|t|(u[0-9a-fA-F]{4}))))*?\"",
+      "^\"([^\\\\\"\\x{0000}-\\x{001F}\\x{007F}-\\x{009F}\\x{061C}\\x{200E}\\x{200F}\\x{202A}-\\x{202E}\\x{2066}-\\x{2069}]|(\\\\(\"|\\\\|\\/|b|f|n|r|t|(u[0-9a-fA-F]{4}))))*?\"",
     )
+
+  re
+}
+
+@target(javascript)
+fn string_regex() -> regex.Regex {
+  let assert Ok(re) =
+    regex.from_string(
+      "^\"([^\\\\\"\\u0000-\\u001F\\u007F-\\u009F\\u061C\\u200E\\u200F\\u202A-\\u202E\\u2066-\\u2069]|(\\\\(\"|\\\\|\\/|b|f|n|r|t|(u[0-9a-fA-F]{4}))))*?\"",
+    )
+  re
+}
+
+fn parse_string(input: String) -> Result(#(Json, String), String) {
+  let re = string_regex()
   let res = regex.scan(re, input)
 
   case res {
