@@ -42,7 +42,7 @@ fn parse_object(input: String) -> Result(#(Json, String), String) {
 
   case input {
     "{" <> rest -> {
-      use #(entries, rest) <- result.try(parse_object_entry(rest))
+      use #(entries, rest) <- result.try(parse_object_entry(rest, []))
       Ok(#(Object(entries), rest))
     }
     _ -> Error(unexpected_character(input))
@@ -51,6 +51,7 @@ fn parse_object(input: String) -> Result(#(Json, String), String) {
 
 fn parse_object_entry(
   input: String,
+  entries: List(#(String, Json)),
 ) -> Result(#(List(#(String, Json)), String), String) {
   let input = string.trim_left(input)
   use #(key, rest) <- result.try(parse_loop(input))
@@ -70,10 +71,10 @@ fn parse_object_entry(
 
       case rest {
         "," <> rest -> {
-          use #(_remaining, rest) <- result.try(parse_object_entry(rest))
-          Ok(#([#(key, value)], rest))
+          use #(remaining, rest) <- result.try(parse_object_entry(rest, entries))
+          Ok(#([#(key, value), ..remaining], rest))
         }
-        "}" <> rest -> Ok(#([#(key, value)], rest))
+        "}" <> rest -> Ok(#([#(key, value), ..entries], rest))
         _ -> Error(unexpected_character(rest))
       }
     }
